@@ -69,9 +69,6 @@
     </svg>
 
     <script>
-        const style = document.createElement("style");
-        document.head.appendChild(style);
-
         function getHeartCurveX(t) {
             return 16 * Math.pow(Math.sin(t), 3);
         }
@@ -92,10 +89,10 @@
 
         window.addEventListener('resize', updateScale);
         updateScale();
-
+        // change sclae frequently
         setInterval(() => {
             scale = baseScale + Math.sin(performance.now() / beatSpeed) * beatAmplitude;
-        }, 16);
+        }, 50);
 
         function spawnRightHearts() {
             const heart = document.getElementById("heart-svg").cloneNode(true);
@@ -112,9 +109,10 @@
 
             document.body.appendChild(heart);
 
-            setTimeout(() => {
+            heart.addEventListener("animationend", () => {
+                // console.log("remove animation");
                 heart.remove();
-            }, 1500);
+            });
         }
         function spawnLeftHearts() {
             const heart = document.getElementById("heart-svg").cloneNode(true);
@@ -132,18 +130,19 @@
 
             document.body.appendChild(heart);
 
-            setTimeout(() => {
+            heart.addEventListener("animationend", () => {
+                // console.log("remove animation");
                 heart.remove();
-            }, 1500);
+            });
         }
 
         setInterval(() => {
             spawnLeftHearts();
-        }, 10);
+        }, 50);
 
         setInterval(() => {
             spawnRightHearts();
-        }, 10);
+        }, 50);
 
     </script>
 </body>
