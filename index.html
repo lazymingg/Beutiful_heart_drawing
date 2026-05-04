@@ -9,46 +9,17 @@
         font-size: 1vw;
     }
 
-    @keyframes left-heart-animation {
-        0% {
-            transform: translate(0rem, 0rem);
-            opacity: 0;
-        }
-
-        50% {
-            transform: translate(-1.25rem, -2.5rem); 
-            opacity: 1;
-        }
-
-        100% {
-            transform: translate(-3.125rem, -6.25rem);
-            opacity: 0;
-        }
-    }
-
-    @keyframes right-heart-animation {
-        0% {
-            transform: translate(0rem, 0rem);
-            opacity: 0;
-        }
-
-        50% {
-            transform: translate(1.25rem, -2.5rem);
-            opacity: 1;
-        }
-
-        100% {
-            transform: translate(3.125rem, -6.25rem);
-            opacity: 0;
-        }
-    }
-
     .heart {
         position: absolute;
-        width: 1.8rem;  
-        height: 1.8rem;  
+        top: 0;
+        left: 0;
+        width: 1.8rem;
+        height: 1.8rem;
         color: pink;
-        filter: drop-shadow(0 0 0.625rem pink);
+        overflow: visible;
+        will-change: transform, opacity;
+        filter: drop-shadow(0 0 0.625rem currentColor);
+        display: none;
     }
 
     body {
@@ -60,8 +31,9 @@
 
 <body>
     <svg id="heart-svg" xmlns="http://www.w3.org/2000/svg" fill="pink" viewBox="0 0 24 24" stroke-width="1.5"
-        stroke="currentColor" class="heart" style="display: none;">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5
+        stroke="currentColor" class="heart">
+        <path stroke-linecap="round" stroke-linejoin="round"
+            d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5
         -1.935 0-3.597 1.126-4.312 2.733
         -0.715-1.607-2.377-2.733-4.313-2.733
         C5.1 3.75 3 5.765 3 8.25
@@ -76,72 +48,89 @@
             return 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
         }
 
-        let baseScale = 12;       
-        let beatAmplitude = 2.5;
-        let beatSpeed = 700;
+        const beatAmplitude = 2.5;
+        const beatSpeed = 700;
+        let baseScale = 12;
         let scale = baseScale;
+        let remPx = window.innerWidth / 100;
 
-        function updateScale() {
+        const heartTemplate = document.getElementById("heart-svg");
+
+        function updateBaseScale() {
             const minDimension = Math.min(window.innerWidth, window.innerHeight);
-            baseScale = minDimension * 0.02; // Scale based on window size
-            scale = baseScale + Math.sin(performance.now() / beatSpeed) * beatAmplitude;
+            baseScale = minDimension * 0.02;
+            remPx = window.innerWidth / 100;
         }
 
-        window.addEventListener('resize', updateScale);
-        updateScale();
-        // change sclae frequently
+        window.addEventListener('resize', updateBaseScale);
+        updateBaseScale();
+
         setInterval(() => {
             scale = baseScale + Math.sin(performance.now() / beatSpeed) * beatAmplitude;
         }, 50);
 
-        function spawnRightHearts() {
-            const heart = document.getElementById("heart-svg").cloneNode(true);
-            heart.style.display = "block";
-            heart.style.position = "absolute";
+        const POOL_SIZE = 120;
+        const COLORS = ['#ffb6c1', '#ff69b4', '#ff85c0', '#ffc0cb', '#ffd1dc', '#ff7eb9', '#ffffff'];
+        const pool = [];
 
-            let t = Math.random() * 1 * Math.PI;
-            const x1 = getHeartCurveX(t) * scale + window.innerWidth / 2;
-            const y1 = -getHeartCurveY(t) * scale + window.innerHeight / 2;
-
-            heart.style.left = `${x1}px`;
-            heart.style.top = `${y1}px`;
-            heart.style.animation = `right-heart-animation 2s ease-in-out forwards`;
-
+        for (let i = 0; i < POOL_SIZE; i++) {
+            const heart = heartTemplate.cloneNode(true);
+            const color = COLORS[i % COLORS.length];
+            heart.setAttribute('fill', color);
+            heart.style.color = color;
             document.body.appendChild(heart);
-
-            heart.addEventListener("animationend", () => {
-                // console.log("remove animation");
-                heart.remove();
-            });
+            pool.push(heart);
         }
-        function spawnLeftHearts() {
-            const heart = document.getElementById("heart-svg").cloneNode(true);
+        for (let i = pool.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+
+        const animOptions = { duration: 2000, easing: 'ease-in-out' };
+
+        function spawnHeart(side) {
+            const heart = pool.pop();
+            if (!heart) return;
+
+            const t = side === "right"
+                ? Math.random() * Math.PI
+                : Math.random() * Math.PI + Math.PI;
+
+            const x = getHeartCurveX(t) * scale + window.innerWidth / 2;
+            const y = -getHeartCurveY(t) * scale + window.innerHeight / 2;
+
+            const dir = side === "right" ? 1 : -1;
+
+            const sz = 0.55 + Math.random() * 0.9;
+            const rot0 = (Math.random() - 0.5) * 30;
+            const rotEnd = rot0 + (Math.random() - 0.5) * 50;
+            const rotMid = (rot0 + rotEnd) / 2;
+
+            const sway = (Math.random() - 0.5) * 2 * remPx;
+            const liftBoost = (0.7 + Math.random() * 0.6);
+
+            const dx1 = dir * 1.25 * remPx + sway;
+            const dy1 = -2.5 * remPx * liftBoost;
+            const dx2 = dir * 3.125 * remPx + sway * 0.5;
+            const dy2 = -6.25 * remPx * liftBoost;
+
             heart.style.display = "block";
-            heart.style.position = "absolute";
 
-            let t = Math.random() * Math.PI + Math.PI;
-            const x1 = getHeartCurveX(t) * scale + window.innerWidth / 2; 
-            const y1 = -getHeartCurveY(t) * scale + window.innerHeight / 2; 
+            const animation = heart.animate([
+                { transform: `translate(${x}px, ${y}px) scale(${sz}) rotate(${rot0}deg)`, opacity: 0 },
+                { transform: `translate(${x + dx1}px, ${y + dy1}px) scale(${sz}) rotate(${rotMid}deg)`, opacity: 1, offset: 0.5 },
+                { transform: `translate(${x + dx2}px, ${y + dy2}px) scale(${sz}) rotate(${rotEnd}deg)`, opacity: 0 }
+            ], animOptions);
 
-            heart.style.left = `${x1}px`;
-            heart.style.top = `${y1}px`;
-
-            heart.style.animation = `left-heart-animation 2s ease-in-out forwards`;
-
-            document.body.appendChild(heart);
-
-            heart.addEventListener("animationend", () => {
-                // console.log("remove animation");
-                heart.remove();
-            });
+            animation.onfinish = () => {
+                heart.style.display = "none";
+                pool.push(heart);
+            };
         }
 
         setInterval(() => {
-            spawnLeftHearts();
-        }, 50);
-
-        setInterval(() => {
-            spawnRightHearts();
+            spawnHeart("left");
+            spawnHeart("right");
         }, 50);
 
     </script>
