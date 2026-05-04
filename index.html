@@ -25,11 +25,30 @@
     body {
         overflow: hidden;
         background-color: black;
+        margin: 0;
+    }
+
+    .wish {
+        position: fixed;
+        bottom: 1.5rem;
+        left: 50%;
+        transform: translateX(-50%);
+        color: pink;
+        font-family: 'Georgia', serif;
+        font-style: italic;
+        font-size: 1.1rem;
+        letter-spacing: 0.1em;
+        opacity: 0.75;
+        text-shadow: 0 0 0.5rem pink;
+        pointer-events: none;
+        user-select: none;
     }
     </style>
 </head>
 
 <body>
+    <div class="wish">hope you alway happiness :D</div>
+
     <svg id="heart-svg" xmlns="http://www.w3.org/2000/svg" fill="pink" viewBox="0 0 24 24" stroke-width="1.5"
         stroke="currentColor" class="heart">
         <path stroke-linecap="round" stroke-linejoin="round"
